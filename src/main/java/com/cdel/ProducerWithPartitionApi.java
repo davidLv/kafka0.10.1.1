@@ -11,15 +11,15 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 
 import com.cdel.util.KafkaConfig;
 
-//简单生产者
-public class ProducerApi {
+//带分区的生产者
+public class ProducerWithPartitionApi {
 
 	public static void main(String[] args) throws IOException {
-		Properties properties = KafkaConfig.getProperties("kafka/producer.properties");
+		Properties properties = KafkaConfig.getProperties("kafka/producer2.properties");
 		//创建生产者
 		Producer<String, String> producer = new KafkaProducer<>(properties);
 		producer.send(
-			new ProducerRecord<String, String>("topic1", "abc", "1111"),
+			new ProducerRecord<String, String>("topic2", "abc", "4444"),
 			new Callback() {
 				@Override
 				public void onCompletion(RecordMetadata metadata, Exception exception) {
