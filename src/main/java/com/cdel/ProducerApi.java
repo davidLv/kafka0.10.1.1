@@ -14,6 +14,10 @@ import com.cdel.util.KafkaConfig;
 //简单生产者
 public class ProducerApi {
 
+	//配置文件里的ack：
+	//acks=1：只需要接收lead写入后，返回的ack
+	//acks=0：不接收ack
+	//acks=all：所有同步followers都写入，都要返回ack
 	public static void main(String[] args) throws IOException {
 		Properties properties = KafkaConfig.getProperties("kafka/producer.properties");
 		//创建生产者
