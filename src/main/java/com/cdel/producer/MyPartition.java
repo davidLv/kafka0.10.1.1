@@ -1,4 +1,4 @@
-package com.cdel;
+package com.cdel.producer;
 
 import java.util.Map;
 
