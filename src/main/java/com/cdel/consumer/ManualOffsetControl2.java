@@ -15,13 +15,13 @@ import org.apache.kafka.common.TopicPartition;
 
 import com.cdel.util.KafkaConfig;
 
-/**The ConsumerApiManualOffsetControl example uses commitSync to mark all received messages as committed.
+/**The ManualOffsetControl example uses commitSync to mark all received messages as committed.
  * In some cases you may wish to have even finer control over which messages have been committed by specifying an offset explicitly.
  * In the example below we commit offset after we finish handling the messages in each partition.
  * @author dell
  *
  */
-public class ConsumerApiManualOffsetControl2 {
+public class ManualOffsetControl2 {
 
 	public static void main(String[] args) throws IOException {
 		Properties properties = KafkaConfig.getProperties("kafka/consumer3.properties");

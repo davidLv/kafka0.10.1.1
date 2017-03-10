@@ -17,7 +17,7 @@ import com.cdel.util.KafkaConfig;
  * @author dell
  *
  */
-public class ConsumerApiManualOffsetControl {
+public class ManualOffsetControl {
 
 	public static void main(String[] args) throws IOException {
 		Properties properties = KafkaConfig.getProperties("kafka/consumer3.properties");
