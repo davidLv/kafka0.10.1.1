@@ -16,7 +16,7 @@ public class ConsumerApi2 {
 		Properties properties = KafkaConfig.getProperties("kafka/consumer2.properties");
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
 		// 消息处理
-		consumer.subscribe(Arrays.asList("topic1"));
+		consumer.subscribe(Arrays.asList("qz"));
 		while (true) {
 			ConsumerRecords<String, String> records = consumer.poll(100);
 			for (ConsumerRecord<String, String> record : records)

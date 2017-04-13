@@ -36,7 +36,7 @@ public class ConsumerApi {
 		Properties properties = KafkaConfig.getProperties("kafka/consumer.properties");
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
 		// 消息处理
-		consumer.subscribe(Arrays.asList("topic1"));
+		consumer.subscribe(Arrays.asList("qz"));
 		//Kafka为分区内的每条记录分配一个Offset。该Offset作为记录在分区的唯一标识。也方面记录消费者在分区中的位置。例如某消费者的Position为5，意味着：
 		//1. 已经消费0-4的记录；
 		//2. 下次从记录5开始消费。
