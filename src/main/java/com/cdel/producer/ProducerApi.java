@@ -23,7 +23,7 @@ public class ProducerApi {
 		//创建生产者
 		Producer<String, String> producer = new KafkaProducer<>(properties);
 		producer.send(
-			new ProducerRecord<String, String>("qz", "abc", "4444"),
+			new ProducerRecord<String, String>("qz", "abc", "adc"),
 			new Callback() {
 				@Override
 				public void onCompletion(RecordMetadata metadata, Exception exception) {
