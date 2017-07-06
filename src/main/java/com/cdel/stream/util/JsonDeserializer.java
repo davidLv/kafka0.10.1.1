@@ -13,6 +13,9 @@ public class JsonDeserializer<T> implements Deserializer<T> {
 
 	private Gson gson = new Gson();
 	private Class<T> deserializedClass;
+	//可以设置时间格式
+	//Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+	//Gson gson = new GsonBuilder().setDateFormat(DateFormat.Long).create()
 
 	public JsonDeserializer(Class<T> deserializedClass) {
 		this.deserializedClass = deserializedClass;
