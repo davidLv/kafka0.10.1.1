@@ -1,0 +1,37 @@
+Kafka中涉及的一些基本概念：
+1、Broker：Kafka集群包含一个或多个服务器，这些服务器被称为Broker。
+2、Topic：逻辑上同Rabbit的Queue队列相似，每条发布到Kafka集群的消息都必须有一个Topic。（物理上不同Topic的消息分开存储，逻辑上一个
+Topic的消息虽然保存于一个或多个Broker上，但用户只需指定消息的Topic即可生产或消费数据而不必关心数据存于何处）
+3、Partition：Partition是物理概念上的分区，为了提供系统吞吐率，在物理上每个Topic会分成一个或多个Partition，每个Partition对应一
+个文件夹（存储对应分区的消息内容和索引文件）。
+4、Producer：消息生产者，负责生产消息并发送到Kafka Broker。
+5、Consumer：消息消费者，向Kafka Broker读取消息并处理的客户端。
+6、Consumer Group：每个Consumer属于一个特定的组（可为每个Consumer指定属于一个组，若不指定则属于默认组），组可以用来实现一条消息
+被组内多个成员消费等功能。
+
+通过该命令，创建一个名为“test”的Topic，该Topic包含一个分区一个Replica。
+./kafka-topics.sh --create --zookeeper 192.168.192.145:2181 --replication-factor 1 --partitions 1 --topic test
+查看其Partition/Replica分布。
+./kafka-topics.sh --describe --topic topic1 --zookeeper 192.168.192.145:2181
+在创建完成后，可以查看当前的Topic。
+其中leader：该节点负责所有指定分区的读和写，每个节点的领导都是随机选择的。
+replicas：备份的节点，无论该节点是否是leader或者目前是否还活着，只是显示。
+lsr：备份节点的集合，也就是活着的节点集合。
+./kafka-topics.sh --list --zookeeper 192.168.192.145:2181
+可以启动Kafka基于命令行的消息生产客户端，启动后可以直接在控制台中输入消息来发送，控制台中的每一行数据都会被视为一条消息来发送。我们
+可以尝试输入几行消息，由于此时并没有消费者，所以这些输入的消息都会被阻塞在名为test的Topics中，直到有消费者将其消费掉位置。
+需要指定kafka：
+./kafka-console-producer.sh --broker-list localhost:9092 --topic test
+启动的是Kafka基于命令行的消息消费客户端，在启动之后，我们马上可以在控制台中看到输出了之前我们在消息生产客户端中发送的消息。我们可以
+再次打开之前的消息生产客户端来发送消息，并观察消费者这边对消息的输出来体验Kafka对消息的基础处理。
+需要指定zk和消费的主题：
+./kafka-console-consumer.sh --zookeeper 192.168.192.145:2181 --topic test --from-beginning
+
+如果要删除主题，需要设置：delete.topic.enable = true
+./kafka-topics.sh --delete --zookeeper 192.168.192.145:2181 --topic test，只是标记为删除，会删除里面的分区
+kafka不能减少分区数
+彻底删除，去zookeeper删除：
+1、登录zookeeper客户端：./bin/zkCli.sh -server 192.168.192.145:2181
+2、找到topic所在的目录：ls /brokers/topics
+3、找到要删除的topic，执行命令：rmr /brokers/topics/【topic name】即可，此时topic被彻底删除。
+或者直接删除kafka存储目录（server.properties文件log.dirs配置，默认为"/tmp/kafka-logs"）相关topic目录

@@ -1,0 +1,54 @@
+Preferred Replica Leader Election Tool
+$KAFKA_HOME/bin/kafka-preferred-replica-election.sh --zookeeper localhost:2181
+用途
+　　有了Replication机制后，每个Partition可能有多个备份。某个Partition的Replica列表叫作AR（Assigned Replicas），AR中的第一个
+Replica即为“Preferred Replica”。创建一个新的Topic或者给已有Topic增加Partition时，Kafka保证Preferred Replica被均匀分布到集
+群中的所有Broker上。理想情况下，Preferred Replica会被选为Leader。以上两点保证了所有Partition的Leader被均匀分布到了集群当中，
+这一点非常重要，因为所有的读写操作都由Leader完成，若Leader分布过于集中，会造成集群负载不均衡。但是，随着集群的运行，该平衡可能会因为
+Broker的宕机而被打破，该工具就是用来帮助恢复Leader分配的平衡。
+　　事实上，每个Topic从失败中恢复过来后，它默认会被设置为Follower角色，除非某个Partition的Replica全部宕机，而当前Broker是该
+Partition的AR中第一个恢复回来的Replica。因此，某个Partition的Leader（Preferred Replica）宕机并恢复后，它很可能不再是该
+Partition的Leader，但仍然是Preferred Replica。
+	也可以在server.properties里增加auto.leader.rebalance.enable = true来设置自动再平衡。
+
+Kafka Reassign Partitions Tool
+用途
+　　该工具的设计目标与Preferred Replica Leader Election Tool有些类似，都旨在促进Kafka集群的负载均衡。不同的是，Preferred
+Replica Leader Election只能在Partition的AR范围内调整其Leader，使Leader分布均匀，而该工具还可以调整Partition的AR。
+　　Follower需要从Leader Fetch数据以保持与Leader同步，所以仅仅保持Leader分布的平衡对整个集群的负载均衡来说是不够的。另外，生产环
+境下，随着负载的增大，可能需要给Kafka集群扩容。向Kafka集群中增加Broker非常简单方便，但是对于已有的Topic，并不会自动将其Partition
+迁移到新加入的Broker上，此时可用该工具达到此目的。某些场景下，实际负载可能远小于最初预期负载，此时可用该工具将分布在整个集群上的
+Partition重装分配到某些机器上，然后可以停止不需要的Broker从而实现节约资源的目的。
+　　需要说明的是，该工具不仅可以调整Partition的AR位置，还可调整其AR数量，即改变该Topic的replication factor。
+
+该工具有三种使用模式
+	generate模式，给定需要重新分配的Topic，自动生成reassign plan（并不执行）
+	execute模式，根据指定的reassign plan重新分配Partition
+	verify模式，验证重新分配Partition是否成功
+	下面这个例子将使用该工具将Topic的所有Partition重新分配到Broker 4/5/6/7上，步骤如下：
+	1、使用generate模式，生成reassign plan。指定需要重新分配的Topic （{“topics”:[{“topic”:”topic1”}],”version”:1}），并存入
+/tmp/topics-to-move.json文件中，然后执行：
+	$KAFKA_HOME/bin/kafka-reassign-partitions.sh
+	--zookeeper localhost:2181
+	--topics-to-move-json-file /tmp/topics-to-move.json
+	--broker-list "4,5,6,7" --generate
+	2、使用execute模式，执行reassign plan
+	将上一步生成的reassignment plan存入/tmp/reassign-plan.json文件中，并执行
+	$KAFKA_HOME/bin/kafka-reassign-partitions.sh
+	--zookeeper localhost:2181
+	--reassignment-json-file /tmp/reassign-plan.json --execute
+	此时，Zookeeper上/admin/reassign_partitions节点被创建，且其值与/tmp/reassign-plan.json文件的内容一致。
+	3、使用verify模式，验证reassign是否完成。执行verify命令
+	$KAFKA_HOME/bin/kafka-reassign-partitions.sh
+	--zookeeper localhost:2181 --verify
+	--reassignment-json-file /tmp/reassign-plan.json
+
+State Change Log Merge Tool
+用途
+　　该工具旨在从整个集群的Broker上收集状态改变日志，并生成一个集中的格式化的日志以帮助诊断状态改变相关的故障。每个Broker都会将其收到
+的状态改变相关的的指令存于名为state-change.log的日志文件中。某些情况下，Partition的Leader Election可能会出现问题，此时我们需要
+对整个集群的状态改变有个全局的了解从而诊断故障并解决问题。该工具将集群中相关的state-change.log日志按时间顺序合并，同时支持用户输入
+时间范围和目标Topic及Partition作为过滤条件，最终将格式化的结果输出。
+	bin/kafka-run-class.sh kafka.tools.StateChangeLogMerger
+	--logs /opt/kafka_2.11-0.8.2.1/logs/state-change.log
+	--topic topic1 --partitions 0,1,2,3,4,5,6,7

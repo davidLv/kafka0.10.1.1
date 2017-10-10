@@ -1,0 +1,68 @@
+http://www.jasongj.com/2015/03/10/KafkaColumn1/
+
+1、kafka为什么要在topic里加入分区的概念？如果没有分区,topic中的segment消息写满后,直接给订阅者不是也可以吗？
+若没有分区，一个topic对应的消息集在分布式集群服务组中，就会分布不均匀，即可能导致某台服务器A记录当前topic的消息集很多，若此topic的
+‘消息压力很大的情况下，服务器A就可能导致压力很大，吞吐也容易导致瓶颈。
+有了分区后，假设一个topic可能分为10个分区，kafka内部会根据一定的算法把10分区尽可能均匀分布到不同的服务器上，比如：A服务器负责topic
+的分区1，B服务器负责topic的分区2，在此情况下，Producer发消息时若没指定发送到哪个分区的时候，kafka就会根据一定算法上个消息可能分区1，
+下个消息可能在分区2。当然高级API也能自己实现其分发算法。
+
+Topic在逻辑上可以被认为是一个queue，每条消费都必须指定它的Topic，可以简单理解为必须指明把这条消息放进哪个queue里。为了使得Kafka的
+吞吐率可以线性提高，物理上把Topic分成一个或多个Partition，每个Partition在物理上对应一个文件夹，该文件夹下存储这个Partition的所有
+消息和索引文件。若创建topic1和topic2两个topic，且分别有13个和19个分区，则整个集群上会相应会生成共32个文件夹
+
+对于传统的message queue而言，一般会删除已经被消费的消息，而Kafka集群会保留所有的消息，无论其被消费与否。当然，因为磁盘限制，不可能
+永久保留所有数据（实际上也没必要），因此Kafka提供两种策略删除旧数据。一是基于时间，二是基于Partition文件大小。例如可以通过配置
+$KAFKA_HOME/config/server.properties，让Kafka删除一周前的数据，也可在Partition文件超过1GB时删除旧数据，配置如下所示。
+# The minimum age of a log file to be eligible for deletion
+log.retention.hours=168
+# The maximum size of a log segment file. When this size is reached a new log segment will be created.
+log.segment.bytes=1073741824
+# The interval at which log segments are checked to see if they can be deleted according to the retention policies
+log.retention.check.interval.ms=300000
+# If log.cleaner.enable=true is set the cleaner will be enabled and individual logs can then be marked for log compaction.
+log.cleaner.enable=false
+这里要注意，因为Kafka读取特定消息的时间复杂度为O(1)，即与文件大小无关，所以这里删除过期文件与提高Kafka性能无关。选择怎样的删除策略只
+与磁盘以及具体的需求有关。另外，Kafka会为每一个Consumer Group保留一些metadata信息——当前消费的消息的position，也即offset。这个
+offset由Consumer控制。正常情况下Consumer会在消费完一条消息后递增该offset。当然，Consumer也可将offset设成一个较小的值，重新消费
+一些消息。因为offet由Consumer控制，所以Kafka broker是无状态的，它不需要标记哪些消息被哪些消费过，也不需要通过broker去保证同一个
+Consumer Group只有一个Consumer能消费某一条消息，因此也就不需要锁机制，这也为Kafka的高吞吐率提供了有力保障。
+
+Producer消息路由
+　　Producer发送消息到broker时，会根据Paritition机制选择将其存储到哪一个Partition。如果Partition机制设置合理，所有消息可以均匀
+分布到不同的Partition里，这样就实现了负载均衡。如果一个Topic对应一个文件，那这个文件所在的机器I/O将会成为这个Topic的性能瓶颈，而有
+了Partition后，不同的消息可以并行写入不同broker的不同Partition里，极大的提高了吞吐率。可以在$KAFKA_HOME/config/
+server.properties中通过配置项num.partitions来指定新建Topic的默认Partition数量，也可在创建Topic时通过参数指定，同时也可以在
+Topic创建之后通过Kafka提供的工具修改。
+
+Consumer Group
+　　（本节所有描述都是基于Consumer hight level API而非low level API）。
+　　使用Consumer high level API时，同一Topic的一条消息只能被同一个Consumer Group内的一个Consumer消费，但多个Consumer Group
+可同时消费这一消息。
+	这是Kafka用来实现一个Topic消息的广播（发给所有的Consumer）和单播（发给某一个Consumer）的手段。一个Topic可以对应多个Consumer
+	 Group。如果需要实现广播，只要每个Consumer有一个独立的Group就可以了。要实现单播只要所有的Consumer在同一个Group里。用Consumer
+	 Group还可以将Consumer进行自由的分组而不需要多次发送消息到不同的Topic。
+
+Kafka delivery guarantee
+　　有这么几种可能的delivery guarantee：
+	At most once 消息可能会丢，但绝不会重复传输
+	At least one 消息绝不会丢，但可能会重复传输
+	Exactly once 每条消息肯定会被传输一次且仅传输一次，很多时候这是用户所想要的。
+
+	读完消息先commit再处理消息。这种模式下，如果Consumer在commit后还没来得及处理消息就crash了，下次重新开始工作后就无法读到刚刚已
+	提交而未处理的消息，这就对应于At most once
+	读完消息先处理再commit。这种模式下，如果在处理完消息之后commit之前Consumer crash了，下次重新开始工作时还会处理刚刚未commit的
+	消息，实际上该消息已经被处理过了。这就对应于At least once。
+
+	Kafka默认保证At least once，并且允许通过设置Producer异步提交来实现At most once。
+
+
+创建/删除Topic
+Controller在Zookeeper的/brokers/topics节点上注册Watch，一旦某个Topic被创建或删除，则Controller会通过Watch得到新创建/删除的
+Topic的Partition/Replica分配。
+对于删除Topic操作，Topic工具会将该Topic名字存于/admin/delete_topics。若delete.topic.enable为true，则Controller注册在
+/admin/delete_topics上的Watch被fire，Controller通过回调向对应的Broker发送StopReplicaRequest；若为false则Controller不会在
+/admin/delete_topics上注册Watch，也就不会对该事件作出反应，此时Topic操作只被记录而不会被执行。
+
+$KAFKA_HOME/bin/kafka-replica-verification.sh，该工具用来验证所指定的一个或多个Topic下每个Partition对应的所有Replica是否都
+同步。可通过topic-white-list这一参数指定所需要验证的所有Topic，支持正则表达式。

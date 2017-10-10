@@ -1,0 +1,33 @@
+http://kafka.apache.org/090/javadoc/index.html?org/apache/kafka/clients/consumer/KafkaConsumer.html
+
+1、先安装zookeeper
+2、vim /usr/kafka_2.11-0.10.0.0/config/server.properties
+
+#(三台机器分别设置0,1,2)
+broker.id=0
+#去掉下面的“#”并设置165(6|7).kafka.cdel.local
+advertised.listeners=PLAINTEXT://your.host.name:9092
+#修改log.dirs=/tmp/kafka-logs
+log.dirs=/data/kafka
+#修改日志输出路径
+#修改zookeeper.connect=localhost:2181
+zookeeper.connect=165.zk.cdel.local:2181, 166.zk.cdel.local:2181, 167.zk.cdel.local:2181/kafka
+#添加下面的配置
+delete.topic.enable=true
+
+vim /usr/kafka_2.11-0.10.0.0/bin/kafka-run-class.sh
+#将LOG_DIR="$base_dir/logs" 修改成
+LOG_DIR="/tmp/kafka"
+
+#启动
+nohup bin/kafka-server-start.sh  ./config/server.properties &
+
+注意：
+1、listeners=PLAINTEXT://172.16.49.173:9092
+备注：listeners一定要配置成为IP地址；如果配置为localhost或服务器的hostname,在使用Java发送数据时就会抛出异 常：
+org.apache.kafka.common.errors.TimeoutException: Batch Expired 。因为在没有配置advertised.host.name 的情况下，
+Kafka并没有像官方文档宣称的那样改为广播我们配置的host.name，而是广播了主机配置的hostname。远端的客户端并没有配置 hosts，
+所以自然是连接不上这个hostname的。
+2、listeners=PLAINTEXT://172.16.49.173:9093
+port=9093
+listeners中的端口号必须与port的值一致

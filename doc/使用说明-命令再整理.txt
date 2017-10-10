@@ -1,0 +1,62 @@
+一、创建topic
+
+使用命令行手动或者向一个不存在的topic发送(生产)消息时都会新创建一个topic
+向一个不存在的topic发送(生产)消息时新创建的topic时，其采用为默认的topic-config配置以及server.properties中的topic的配置。
+
+使用命令行手动创建一个topic可以使用 –config 选项配合topic-config配置中的信息来覆盖默认配置或者使用–delete-config来恢复默认配置。
+(一)、示例
+
+bin/kafka-topics.sh --zookeeper localhost:2181 --create --topic my-topic --partitions 1 --replication-factor 2
+--config max.message.bytes=64000 --config flush.messages=1
+
+(一)、主要参数说明
+
+1. partitions分区数
+
+(1). partitions ：分区数，控制topic将分片成多少个log。可以显示指定，如果不指定则会使用broker(server.properties)中的
+num.partitions配置的数量
+(2). 虽然增加分区数可以提供kafka集群的吞吐量、但是过多的分区数或是单台服务器上的分区数过多，会增加不可用及延迟的风险。因为多的分区数，
+意味着需要打开更多的文件句柄、增加点到点的延时、增加客户端的内存消耗。
+(3). 分区数也限制了consumer的并行度，即限制了并行consumer消息的线程数不能大于分区数
+(4). 分区数也限制了producer发送消息时指定的分区。如创建topic时分区设置为1，producer发送消息时通过自定义的分区方法指定分区为2或以上
+的数都会出错的；这种情况可以通过alter –partitions 来增加分区数。
+
+2. replication-factor副本
+
+(1). replication factor 控制消息保存在几个broker(服务器)上，一般情况下等于broker的个数。
+(2). 如果没有在创建时显示指定或通过API向一个不存在的topic生产消息时会使用broker(server.properties)中的
+default.replication.factor配置的数量
+
+二、查看topic属性
+
+bin/kafka-topics.sh --zookeeper zk1:2181 --describe --topic topicname
+
+Topic:testp     PartitionCount:2        ReplicationFactor:2     Configs:
+        Topic: testp    Partition: 0    Leader: 0       Replicas: 0,1   Isr: 0,1
+        Topic: testp    Partition: 1    Leader: 1       Replicas: 1,0   Isr: 1,0
+
+结果说明:
+
+第一行，列出了topic的名称，分区数(PartitionCount),副本数(ReplicationFactor)以及其他的配置(Config.s)
+Leader:1 表示做为读写的broker的编号
+Replicas:表示该topic的每个分区在那些borker中保存
+Isr:表示当前有效的broker, Isr是Replicas的子集
+
+三、修改topic
+
+增加分区数
+bin/kafka-topics.sh --zookeeper zk_host:port --alter --topic my_topic_name--partitions 40
+
+增加配置
+bin/kafka-topics.sh --zookeeper zk_host:port --alter --topic my_topic_name --config flush.messages=1
+
+删除配置
+bin/kafka-topics.sh --zookeeper zk_host:port --alter --topic my_topic_name --delete-config flush.messages=1
+
+四、删除topic
+
+目前删除操作在默认情况下只是打上一个删除的标记，在重新启动kafka 后才删除。如果需要立即删除，则需要在server.properties中配置
+
+delete.topic.enable=true
+
+bin/kafka-topics.sh --zookeeper zk_host:port --delete --topic my_topic_name

@@ -1,0 +1,14 @@
+调用./kafka-console-consumer.sh --zookeeper 192.168.192.146:2181 --topic testp13 --from-beginning时报错：
+[2017-04-13 16:57:08,304] WARN Fetching topic metadata with correlation id 4 for topics [Set(testp11)] from broker [BrokerEndPoint(2,192.168.192.147,9092)] failed (kafka.client.ClientUtils$)
+java.nio.channels.ClosedChannelException
+        at kafka.network.BlockingChannel.send(BlockingChannel.scala:110)
+        at kafka.producer.SyncProducer.liftedTree1$1(SyncProducer.scala:80)
+        at kafka.producer.SyncProducer.kafka$producer$SyncProducer$$doSend(SyncProducer.scala:79)
+        at kafka.producer.SyncProducer.send(SyncProducer.scala:124)
+        at kafka.client.ClientUtils$.fetchTopicMetadata(ClientUtils.scala:59)
+        at kafka.client.ClientUtils$.fetchTopicMetadata(ClientUtils.scala:94)
+        at kafka.consumer.ConsumerFetcherManager$LeaderFinderThread.doWork(ConsumerFetcherManager.scala:65)
+        at kafka.utils.ShutdownableThread.run(ShutdownableThread.scala:63)
+解决办法:
+查看集群各个broker服务器是否打开了防火墙------/etc/rc.d/init.d/iptables status
+查看结果有一台服务打开了防火墙  ，关闭   ----- /etc/rc.d/init.d/iptables stop

@@ -1,0 +1,12 @@
+num.partitions：调用send时，如果不存在topic，也会创建topic，在该方法中没有提供分区个数的参数，在这里分区个数是由服务端broker的配置中
+num.partitions属性决定的
+delete.topic.enable=true：可以删除主题，如果没删除掉，去zookeeper再删除一次，或者在执行一遍删除主题命令。
+auto.leader.rebalance.enable=true：设置自动再平衡，具体可以见“一些命令的使用.txt”
+对于Kafka而言，Kafka存活包含两个条件，一是它必须维护与
+ZooKeeper的session（这个通过ZooKeeper的Heartbeat机制来实现）。二是Follower必须能够及时将Leader的消息复制过来，不能“落后太多”。
+Leader会跟踪与其保持同步的Replica列表，该列表称为ISR（即in-sync Replica）。如果一个Follower宕机，或者落后太多，Leader将把它从
+ISR中移除。这里所描述的“落后太多”指Follower复制的消息落后于Leader后的条数超过预定值（该值可在$KAFKA_HOME/config/
+server.properties中通过replica.lag.max.messages配置，其默认值是4000）或者Follower超过一定时间（该值可在
+$KAFKA_HOME/config/server.properties中通过replica.lag.time.max.ms来配置，其默认值是10000）未向Leader发送fetch请求。
+auto.create.topics.enable=false：是否允许自动创建topic。如果是真的，则produce或者fetch 不存在的topic时，会自动创建这个topic。
+否则需要使用命令行创建topic
