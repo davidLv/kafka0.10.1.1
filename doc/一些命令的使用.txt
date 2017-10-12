@@ -1,12 +1,13 @@
 Preferred Replica Leader Election Tool
 $KAFKA_HOME/bin/kafka-preferred-replica-election.sh --zookeeper localhost:2181
+触发指定的分区进行优先副本选举，这样可以让分区leader副本在集群中分布得更均匀。
 用途
 　　有了Replication机制后，每个Partition可能有多个备份。某个Partition的Replica列表叫作AR（Assigned Replicas），AR中的第一个
 Replica即为“Preferred Replica”。创建一个新的Topic或者给已有Topic增加Partition时，Kafka保证Preferred Replica被均匀分布到集
 群中的所有Broker上。理想情况下，Preferred Replica会被选为Leader。以上两点保证了所有Partition的Leader被均匀分布到了集群当中，
 这一点非常重要，因为所有的读写操作都由Leader完成，若Leader分布过于集中，会造成集群负载不均衡。但是，随着集群的运行，该平衡可能会因为
 Broker的宕机而被打破，该工具就是用来帮助恢复Leader分配的平衡。
-　　事实上，每个Topic从失败中恢复过来后，它默认会被设置为Follower角色，除非某个Partition的Replica全部宕机，而当前Broker是该
+　　事实上，每个Partition从失败中恢复过来后，它默认会被设置为Follower角色，除非某个Partition的Replica全部宕机，而当前Broker是该
 Partition的AR中第一个恢复回来的Replica。因此，某个Partition的Leader（Preferred Replica）宕机并恢复后，它很可能不再是该
 Partition的Leader，但仍然是Preferred Replica。
 	也可以在server.properties里增加auto.leader.rebalance.enable = true来设置自动再平衡。
@@ -52,3 +53,11 @@ State Change Log Merge Tool
 	bin/kafka-run-class.sh kafka.tools.StateChangeLogMerger
 	--logs /opt/kafka_2.11-0.8.2.1/logs/state-change.log
 	--topic topic1 --partitions 0,1,2,3,4,5,6,7
+
+kafka-consumer-groups：有两个主要功能，一是查询当前所有consumer group，二是获取指定consumer group的详细信息。
+
+kafka-producer-perf-test：负责测试生产者的各项性能指标。
+
+kafka-consumer-perf-test：负责测试消费者的各项性能指标。
+
+kafka-mirrir-maker：实现了数据在多个集群的同步，可用于kafka集群的镜像操作。
