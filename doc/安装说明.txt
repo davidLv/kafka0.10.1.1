@@ -21,6 +21,8 @@ LOG_DIR="/tmp/kafka"
 
 #启动
 nohup bin/kafka-server-start.sh  ./config/server.properties &
+支持jmx
+JMX_PORT=9998 nohup bin/kafka-server-start.sh  ./config/server.properties &
 
 注意：
 1、listeners=PLAINTEXT://172.16.49.173:9092
