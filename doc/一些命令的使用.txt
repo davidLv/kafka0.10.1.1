@@ -10,7 +10,7 @@ Broker的宕机而被打破，该工具就是用来帮助恢复Leader分配的�
 　　事实上，每个Partition从失败中恢复过来后，它默认会被设置为Follower角色，除非某个Partition的Replica全部宕机，而当前Broker是该
 Partition的AR中第一个恢复回来的Replica。因此，某个Partition的Leader（Preferred Replica）宕机并恢复后，它很可能不再是该
 Partition的Leader，但仍然是Preferred Replica。
-	也可以在server.properties里增加auto.leader.rebalance.enable = true来设置自动再平衡。
+	也可以在server.properties里增加auto.leader.rebalance.enable = true来设置自动再平衡。但不建议再生产环境使用。
 
 Kafka Reassign Partitions Tool
 用途
@@ -33,6 +33,8 @@ Partition重装分配到某些机器上，然后可以停止不需要的Broker�
 	--zookeeper localhost:2181
 	--topics-to-move-json-file /tmp/topics-to-move.json
 	--broker-list "4,5,6,7" --generate
+	这个工具会在标准控制台输出两个json对象，分别描述了当前的分区分配情况已经建议的分区分配方案，可以把第一个json保存起来，以便在必要时
+	进行回滚，把第二个json保存到另一个文件，作为kafka-reassign-partitions.sh工具的输入来执行第二个步骤。
 	2、使用execute模式，执行reassign plan
 	将上一步生成的reassignment plan存入/tmp/reassign-plan.json文件中，并执行
 	$KAFKA_HOME/bin/kafka-reassign-partitions.sh
