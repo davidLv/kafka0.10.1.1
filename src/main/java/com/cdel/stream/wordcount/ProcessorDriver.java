@@ -64,8 +64,8 @@ public class ProcessorDriver {
         props.put(StreamsConfig.CLIENT_ID_CONFIG, "Example-Kafka-Streams-Job");
         props.put("group.id", "streams-purchases");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "testing-streams-api");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.192.145:9092,192.168.192.146:9092,192.168.192.147:9092");
-        props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "192.168.192.145:2181,192.168.192.146:2181,192.168.192.147:2181");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.170.104:9092,192.168.170.105:9092,192.168.170.106:9092");
+        props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "192.168.170.104:2181,192.168.170.105:2181,192.168.170.106:2181");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
         props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
